@@ -17,6 +17,8 @@ namespace ProjectHobo.Sprites
 
     protected Dictionary<string, Animation> _animations;
 
+    protected float _layer;
+
     protected float _rotation;
 
     protected Vector2 _scale;
@@ -24,6 +26,33 @@ namespace ProjectHobo.Sprites
     public Body Body;
 
     public Color Colour { get; set; }
+
+    public float Density { get; set; }
+
+    public float Height
+    {
+      get
+      {
+        if (Texture != null)
+          return Texture.Height;
+        else if (_animationManager != null)
+          return _animationManager.CurrentFrameHeight;
+
+        throw new Exception("Can't determine height");
+      }
+    }
+
+    public float Layer
+    {
+      get { return _layer; }
+      set
+      {
+        _layer = value;
+
+        if (_animationManager != null)
+          _animationManager.Layer = _layer;
+      }
+    }
 
     public Texture2D Texture { get; private set; }
 
@@ -52,21 +81,29 @@ namespace ProjectHobo.Sprites
       }
     }
 
-    public Sprite(Dictionary<string, Animation> animations)
+    public float Width
+    {
+      get
+      {
+        if (Texture != null)
+          return Texture.Width;
+        else if (_animationManager != null)
+          return _animationManager.CurrentFrameWidth;
+
+        throw new Exception("Can't determine width");
+      }
+    }
+
+    public Sprite(Dictionary<string, Animation> animations) :
+      this(texture: null)
     {
       _animations = animations;
       _animationManager = new AnimationManager(_animations.FirstOrDefault().Value);
-
-      Colour = Color.White;
-
-      Scale = new Vector2(1f, 1f);
     }
 
     public Sprite(Texture2D texture)
     {
       Texture = texture;
-
-      Colour = Color.White;
 
       Scale = new Vector2(1f, 1f);
     }
@@ -81,16 +118,31 @@ namespace ProjectHobo.Sprites
 
     }
 
+    protected virtual void SetAnimation(GameTime gameTime)
+    {
+
+    }
+
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
       if (_animationManager != null)
       {
+        SetAnimation(gameTime);
+
         _animationManager.Position = Body.Position;
         _animationManager.Draw(spriteBatch);
       }
       else
       {
-        spriteBatch.Draw(Texture, Body.Position, null, Colour, Body.Rotation, new Vector2(Texture.Width / 2, Texture.Height / 2), Scale / new Vector2(Texture.Width, Texture.Height), SpriteEffects.FlipVertically, 0f);
+        spriteBatch.Draw(Texture,
+          Body.Position, 
+          null, 
+          Colour, 
+          Body.Rotation, 
+          new Vector2(Texture.Width / 2, Texture.Height / 2), 
+          Scale / new Vector2(Texture.Width, Texture.Height), 
+          SpriteEffects.FlipVertically, 
+          _layer);
       }
     }
 

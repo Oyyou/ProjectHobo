@@ -15,6 +15,26 @@ namespace ProjectHobo.Managers
 
     private float _timer;
 
+    public float CurrentFrameHeight
+    {
+      get
+      {
+        return _animation.FrameHeight;
+      }
+    }
+
+    public float CurrentFrameWidth
+    {
+      get
+      {
+        return _animation.FrameWidth;
+      }
+    }
+
+    public bool Flipped { get; set; }
+
+    public float Layer { get; set; }
+
     public Vector2 Position { get; set; }
 
     public Vector2 Scale { get; set; }
@@ -30,17 +50,19 @@ namespace ProjectHobo.Managers
     public void Draw(SpriteBatch spriteBatch)
     {
       spriteBatch.Draw(_animation.Texture,
-                       Position,
-                       new Rectangle(_animation.CurrentFrame * _animation.FrameWidth,
-                                     0,
-                                     _animation.FrameWidth,
-                                     _animation.FrameHeight),
-                       Color.White,
-                       Rotation,
-                       new Vector2(_animation.FrameWidth / 2, _animation.FrameHeight / 2),
-                       Scale / new Vector2(_animation.FrameWidth / 2, _animation.FrameHeight / 2),
-                       SpriteEffects.FlipVertically,
-                       0);
+        Position,
+        new Rectangle(_animation.CurrentFrame * _animation.FrameWidth,
+          0,
+          _animation.FrameWidth,
+          _animation.FrameHeight
+        ),
+        Color.White,
+        Rotation,
+        new Vector2(_animation.FrameWidth / 2, _animation.FrameHeight / 2),
+        (Scale / 2) / new Vector2(_animation.FrameWidth / 2, _animation.FrameHeight / 2),
+        Flipped ? (SpriteEffects.FlipVertically | SpriteEffects.FlipHorizontally) : SpriteEffects.FlipVertically,
+        Layer
+      );
     }
 
     public void Play(Animation animation)

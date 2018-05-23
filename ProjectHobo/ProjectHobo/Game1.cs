@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using ProjectHobo.Models;
 using ProjectHobo.Sprites;
 using System.Collections.Generic;
+using System.Linq;
 using tainicom.Aether.Physics2D.Dynamics;
 
 namespace ProjectHobo
@@ -63,29 +64,79 @@ namespace ProjectHobo
 
       var playerAnimations = new Dictionary<string, Animation>()
       {
-        { "WalkingLeft", new Animation(Content.Load<Texture2D>("Player/WalkingLeft"), 3) },
-        { "WalkingRight", new Animation(Content.Load<Texture2D>("Player/WalkingRight"), 3) },
+        { "Idle", new Animation(Content.Load<Texture2D>("Player/Hobo_Idle"), 2) { FrameSpeed = 0.7f, } },
+        { "Running", new Animation(Content.Load<Texture2D>("Player/Hobo_Running"), 4) },
+        { "Jumping", new Animation(Content.Load<Texture2D>("Player/Hobo_Jumping"), 3) },
+        { "Falling", new Animation(Content.Load<Texture2D>("Player/Hobo_Falling"), 3) },
+        { "Sliding", new Animation(Content.Load<Texture2D>("Player/Hobo_Sliding"), 3) },
       };
 
-      var playerBody = _world.CreateRectangle(0.3125f, 0.46875f, 0.1f, new Vector2(1, 1.5f));
-      playerBody.BodyType = BodyType.Dynamic;
-      playerBody.FixedRotation = true;
-      playerBody.SetFriction(0.2f);
-      //playerBody.SetRestitution(0.0f);
-
-
-      _sprites.Add(new Player(playerAnimations)
+      var players = new List<Player>()
       {
-        Colour = Color.Red,
-        Body = playerBody,
-        Scale = new Vector2(0.3125f, 0.46875f)
-      });
+        //new Player(square),
+        new Player(playerAnimations),
+      };
 
-      //for (int i = 0; i < 1; i++)
+      foreach (var player in players)
       {
-        var position = new Vector2(0, -1.25f);
-        var scale = new Vector2(8f, 1f);
-        var body = _world.CreateRectangle(scale.X, scale.Y, 1f, position);
+        var size = new Vector2(player.Width, player.Height);
+        var playerScale = new Vector2(size.X / 64, size.Y / 64);
+        var density = (playerScale.X + playerScale.Y) / 10;
+        System.Console.WriteLine("Size: " + size);
+        System.Console.WriteLine("Scale: " + playerScale);
+        System.Console.WriteLine("Density: " + density);
+
+        var playerBody = _world.CreateRectangle(playerScale.X, playerScale.Y, density, new Vector2(1, 2.5f));
+        playerBody.BodyType = BodyType.Dynamic;
+        playerBody.FixedRotation = true;
+        playerBody.SetFriction(0.1f);
+        playerBody.SetCollisionCategories(Category.Cat20);
+        playerBody.SetCollidesWith(Category.Cat1 | Category.Cat2);
+
+        player.Body = playerBody;
+        player.Density = density;
+        player.Scale = playerScale;
+        player.Layer = 0.5f;
+
+        _sprites.Add(player);
+      }
+
+      var collidables = new[]
+      {
+        new
+        {
+          Position = new Vector2(0, -3),
+          Scale = new Vector2(10f, 1f),
+          Color = Color.Blue,
+          Category = Category.Cat1,
+        },
+        new
+        {
+          Position = new Vector2(-4, 0),
+          Scale = new Vector2(1f, 3f),
+          Color = Color.Red,
+          Category = Category.Cat2,
+        },
+        new
+        {
+          Position = new Vector2(4, 0),
+          Scale = new Vector2(1f, 4f),
+          Color = Color.Red,
+          Category = Category.Cat2,
+        },
+        new
+        {
+          Position = new Vector2(-7, 1),
+          Scale = new Vector2(5f, 1f),
+          Color = Color.Red,
+          Category = Category.Cat1,
+        },
+      };
+
+      foreach (var collidable in collidables)
+      {
+        var body = _world.CreateRectangle(collidable.Scale.X, collidable.Scale.Y, 1f, collidable.Position);
+        body.SetCollisionCategories(collidable.Category);
         body.BodyType = BodyType.Static;
         body.SetRestitution(0.0f);
         body.SetFriction(0.2f);
@@ -93,8 +144,10 @@ namespace ProjectHobo
         _sprites.Add(new Sprite(square)
         {
           Body = body,
-          Scale = scale,
+          Colour = collidable.Color,
+          Scale = collidable.Scale,
         });
+
       }
     }
 
@@ -160,7 +213,7 @@ namespace ProjectHobo
       GraphicsDevice.Clear(Color.CornflowerBlue);
 
       _spriteBatchEffect.Projection = _projection;
-      spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, RasterizerState.CullClockwise, _spriteBatchEffect);
+      spriteBatch.Begin(SpriteSortMode.FrontToBack, null, null, null, RasterizerState.CullClockwise, _spriteBatchEffect);
 
       foreach (var sprite in _sprites)
         sprite.Draw(gameTime, spriteBatch);

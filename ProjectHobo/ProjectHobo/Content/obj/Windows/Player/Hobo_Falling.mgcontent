@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <SourceFile>c:/users/nlewin/source/repos/ProjectHobo/ProjectHobo/Content/Square.png</SourceFile>
-  <SourceTime>2018-05-18T13:31:05.720873+01:00</SourceTime>
-  <DestFile>c:/users/nlewin/source/repos/ProjectHobo/ProjectHobo/Content/bin/Windows/Square.xnb</DestFile>
-  <DestTime>2018-05-22T11:48:04.8632878+01:00</DestTime>
+  <SourceFile>c:/users/nlewin/source/repos/ProjectHobo/ProjectHobo/Content/Player/Hobo_Falling.png</SourceFile>
+  <SourceTime>2018-05-21T17:16:28.8712615+01:00</SourceTime>
+  <DestFile>c:/users/nlewin/source/repos/ProjectHobo/ProjectHobo/Content/bin/Windows/Player/Hobo_Falling.xnb</DestFile>
+  <DestTime>2018-05-22T11:48:04.9042919+01:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2017-03-01T15:05:36+00:00</ImporterTime>
   <Processor>TextureProcessor</Processor>

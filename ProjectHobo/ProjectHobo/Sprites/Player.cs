@@ -12,12 +12,15 @@ namespace ProjectHobo.Sprites
 {
   public class Player : Sprite
   {
+    private bool _firstPass = true;
+
     private KeyboardState _currentKey;
 
     private KeyboardState _previousKey;
 
     private bool _onGround = false;
-    private bool _hasJumped = false;
+    private bool _isSlidingOnLeft = false;
+    private bool _isSlidingOnRight = false;
 
     public Vector2 Velocity;
 
@@ -32,57 +35,77 @@ namespace ProjectHobo.Sprites
 
     public override void Update(GameTime gameTime)
     {
+      if (_firstPass)
+      {
+        _firstPass = false;
+
+        Body.OnCollision += Body_OnCollision;
+        Body.OnSeparation += Body_OnSeparation;
+      }
+
       _previousKey = _currentKey;
       _currentKey = Keyboard.GetState();
 
-      float v = 0f;
+      var speed = Density / 5;
 
       if (_currentKey.IsKeyDown(Keys.A))
       {
-        //Body.ApplyLinearImpulse(new Vector2(-1f, 0));
-        //Body.LinearVelocity = new Vector2(1000f, 0);
-        //Body.LinearVelocity = new Vector2(-250f, Body.LinearVelocity.Y);
-        Body.ApplyLinearImpulse(new Vector2(-0.01f, 0));
-        _animationManager?.Play(_animations["WalkingLeft"]);
-        //Body.ApplyForce(new Vector2(-0.02f, 0));
-        v = -5f;
+        Body.ApplyLinearImpulse(new Vector2(-speed, 0));
+
       }
       else if (_currentKey.IsKeyDown(Keys.D))
       {
-        Body.ApplyLinearImpulse(new Vector2(0.01f, 0));
-        _animationManager?.Play(_animations["WalkingRight"]);
-        //Body.ApplyForce(new Vector2(0.02f, 0));
-        v = 5f;
+        Body.ApplyLinearImpulse(new Vector2(speed, 0));
       }
-      else
-      {
-        _animationManager?.Stop();
-        //Body.LinearVelocity = new Vector2(0f, Body.LinearVelocity.Y);
-      }
-      //else
-      //{
-      //  Body.LinearVelocity = new Vector2(0f, Body.LinearVelocity.Y);
-      //  //Body.LinearVelocity = new Vector2(0f, Body.LinearVelocity.Y);
-      //}
 
-      //Body.SetTransform(new Vector2(Body.Position.X + v, Body.Position.Y), 0f);
-
-      _hasJumped = false;
-
-      if ((_previousKey.IsKeyUp(Keys.Space) &&
-          _currentKey.IsKeyDown(Keys.Space)) && 
-          !_hasJumped)
+      if (_previousKey.IsKeyUp(Keys.Space) &&
+          _currentKey.IsKeyDown(Keys.Space))
       {
         Console.WriteLine("Jumping");
-        Body.ApplyLinearImpulse(new Vector2(0, 0.05f));
-        _onGround = false;
-        //_hasJumped = true;
+
+        if (_onGround)
+        {
+          Body.ApplyLinearImpulse(new Vector2(0, Density * 10f));
+          _onGround = false;
+        }
+        else if (_isSlidingOnLeft)
+        {
+          Body.LinearVelocity = new Vector2(0, 0);
+          Body.ApplyLinearImpulse(new Vector2(Density * 6f, Density * 8f));
+        }
+        else if (_isSlidingOnRight)
+        {
+          Body.LinearVelocity = new Vector2(0, 0);
+          Body.ApplyLinearImpulse(new Vector2(-(Density * 6f), Density * 8f));
+        }
+      }
+    }
+
+    private void Body_OnSeparation(tainicom.Aether.Physics2D.Dynamics.Fixture sender, tainicom.Aether.Physics2D.Dynamics.Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact)
+    {
+      if (other.CollisionCategories == tainicom.Aether.Physics2D.Dynamics.Category.Cat2)
+      {
+        _isSlidingOnLeft = false;
+        _isSlidingOnRight = false;
+      }
+    }
+
+    private bool Body_OnCollision(tainicom.Aether.Physics2D.Dynamics.Fixture sender, tainicom.Aether.Physics2D.Dynamics.Fixture other, tainicom.Aether.Physics2D.Dynamics.Contacts.Contact contact)
+    {
+      if (other.CollisionCategories == tainicom.Aether.Physics2D.Dynamics.Category.Cat1)
+        _onGround = true;
+
+      if (other.CollisionCategories == tainicom.Aether.Physics2D.Dynamics.Category.Cat2)
+      {
+        if (other.Body.GetTransform().p.X < sender.Body.GetTransform().p.X)
+          _isSlidingOnLeft = true;
+        else
+          _isSlidingOnRight = true;
       }
 
-      if (!_onGround)
-        Velocity.Y += 0.3f;
+      Console.WriteLine("Colliding");
 
-      _animationManager?.Update(gameTime);
+      return true;
     }
 
     public override void PostUpdate(GameTime gameTime)
@@ -92,6 +115,52 @@ namespace ProjectHobo.Sprites
 
     public override void OnCollide(Sprite sprite)
     {
+
+    }
+
+    protected override void SetAnimation(GameTime gameTime)
+    {
+      if (_animationManager == null)
+        return;
+
+      if (Body.LinearVelocity.X < 0)
+        _animationManager.Flipped = true;
+      else _animationManager.Flipped = false;
+
+      if (_onGround)
+      {
+        if (Body.LinearVelocity.X != 0)
+        {
+          _animationManager.Play(_animations["Running"]);
+        }
+        else
+        {
+          _animationManager.Play(_animations["Idle"]);
+        }
+      }
+      else if (_isSlidingOnLeft)
+      {
+        _animationManager.Flipped = true;
+        _animationManager.Play(_animations["Sliding"]);
+      }
+      else if (_isSlidingOnRight)
+      {
+        _animationManager.Flipped = false;
+        _animationManager.Play(_animations["Sliding"]);
+      }
+      else
+      {
+        if (Body.LinearVelocity.Y < 0)
+        {
+          _animationManager.Play(_animations["Falling"]);
+        }
+        else if (Body.LinearVelocity.Y > 0)
+        {
+          _animationManager.Play(_animations["Jumping"]);
+        }
+      }
+
+      _animationManager.Update(gameTime);
 
     }
   }
